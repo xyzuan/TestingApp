@@ -20,7 +20,7 @@ jobs:
         run: nuget restore TestingApp.sln
 
       - name: Build with MSBuild
-        run: msbuild TestingApp.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=false /p:SkipInvalidConfigurations=true /p:TargetFrameworkVersion=v4.8 /p:AutoParameterizationWebConfigConnectionStrings=false /p:OutDir=".\TestingApp\bin\Release\"
+        run: msbuild TestingApp.sln /p:Configuration=Release
 
       - name: Publish via MSDeploy
         shell: powershell
