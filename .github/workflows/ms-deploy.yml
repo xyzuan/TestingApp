@@ -21,10 +21,16 @@ jobs:
 
       - name: Build with MSBuild
         run: msbuild TestingApp.sln /p:Configuration=Release
+
       - name: Publish via MSDeploy
-        run: >
-            "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-            -verb:sync
-            -source:contentPath="./TestingApp/bin/Release/publish"
-            -dest:contentPath="TestingApp",computerName="${{ secrets.DEPLOY_SERVER }}",userName="${{ secrets.DEPLOY_USER }}",password="${{ secrets.DEPLOY_PASS }}",authType="Basic"
-            -allowUntrusted
+        shell: cmd
+        run: |
+            "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" ^
+              -verb:sync ^
+              -source:contentPath=".\TestingApp\bin\Release\publish" ^
+              -dest:contentPath="TestingApp",computerName="%DEPLOY_SERVER%",userName="%DEPLOY_USER%",password="%DEPLOY_PASS%",authType="Basic" ^
+              -allowUntrusted
+        env:
+            DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
+            DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+            DEPLOY_PASS: ${{ secrets.DEPLOY_PASS }}
