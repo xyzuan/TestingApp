@@ -1,0 +1,31 @@
+name: Build & Deploy ASP.NET Framework via MSDeploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet Packages
+        run: nuget restore TestingApp.sln
+
+      - name: Build with MSBuild
+        run: msbuild TestingApp.sln /p:Configuration=Release
+
+      - name: Publish via MSDeploy
+        run: |
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" `
+            -verb:sync `
+            -source:contentPath="./TestingApp/bin/Release/publish" `
+            -dest:contentPath="TestingApp",computerName="${{ secrets.DEPLOY_SERVER }}",userName="${{ secrets.DEPLOY_USER }}",password="${{ secrets.DEPLOY_PASS }}",authType="Basic" `
+            -allowUntrusted
