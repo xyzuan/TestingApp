@@ -41,8 +41,7 @@ jobs:
         shell: cmd
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" ^
-          -verb:sync ^
-          -source:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip" ^
-          -dest:auto,computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic" ^
-          -setParam:name="IIS Web Application Name",value="TestingApp"
-          -enableRule:AppOffline -allowUntrusted -verbose
+            -verb:sync ^
+            -source:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip" ^
+            -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic" ^
+            -enableRule:AppOffline -enableRule:DoNotDeleteRule -allowUntrusted -verbose
