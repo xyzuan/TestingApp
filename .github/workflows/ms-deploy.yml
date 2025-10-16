@@ -24,7 +24,7 @@ jobs:
       - name: Build Package
         shell: pwsh
         run: |
-          msbuild .\TestingApp\TestingApp.csproj /t:Package /p:Configuration=Release /p:PackageLocation="$env:GITHUB_WORKSPACE\artifacts\TestingApp.zip"
+          & "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" .\TestingApp\TestingApp.csproj /t:Package /p:Configuration=Release /p:PackageLocation="$env:GITHUB_WORKSPACE\artifacts\TestingApp.zip"
 
       - name: Verify Package Exists
         shell: cmd
