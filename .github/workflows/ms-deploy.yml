@@ -28,7 +28,7 @@ jobs:
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
           -source:contentPath=".\TestingApp\bin\Release\publish"
-          -dest:contentPath="TestingApp",computerName="https://70.153.16.235:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+          -dest:contentPath="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
           -allowUntrusted
         env:
           DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
