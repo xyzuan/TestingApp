@@ -8,9 +8,7 @@ on:
 jobs:
   build-and-deploy:
     # This job runs on the self-hosted runner, which has access to your IIS server.
-    runs-on: self-hosted
-    environment: Production # Optional: Link to a GitHub Environment for tracking deployments
-
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
