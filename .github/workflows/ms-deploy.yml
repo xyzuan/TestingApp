@@ -20,6 +20,10 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Restore NuGet packages
+        shell: cmd
+        run: nuget restore TestingApp.sln
+
       - name: Package with MSBuild (Web Deploy)
         shell: cmd
         run: >
