@@ -55,7 +55,7 @@ jobs:
       - name: Deploy to IIS via Web Deploy
         run: |
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" -verb:sync ^
-          -source:iisApp=".\TestingApp\bin\Release\publish" ^
+          -source:contentPath=".\TestingApp\bin\Release\publish" ^
           -dest:iisApp="TestingApp",computerName="https://${{ env.DEPLOY_SERVER }}:8172/msdeploy.axd?site=TestingApp",userName="${{ env.DEPLOY_USER }}",password="${{ env.DEPLOY_PASS }}",authType="Basic" ^
           -allowUntrusted -enableRule:AppOffline
         shell: cmd
