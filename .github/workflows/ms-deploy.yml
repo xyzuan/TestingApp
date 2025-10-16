@@ -1,4 +1,4 @@
-name: Build & Deploy ASP.NET Framework via MSDeploy
+name: Build & Deploy ASP.NET Framework - Package + AppOffline
 
 on:
   push:
@@ -21,30 +21,25 @@ jobs:
       - name: Restore
         run: dotnet restore ".\TestingApp\TestingApp.csproj"
 
-      - name: Publish (ASP.NET Core)
+      - name: Build Package
         shell: pwsh
-        run: >
-          dotnet publish .\TestingApp\TestingApp.csproj
-          -c Release
-          -o "$env:GITHUB_WORKSPACE\artifacts\publish"
-          --nologo
+        run: |
+          msbuild .\TestingApp\TestingApp.csproj /t:Package /p:Configuration=Release /p:PackageLocation="$env:GITHUB_WORKSPACE\artifacts\TestingApp.zip"
 
-      - name: Verify publish output exists
+      - name: Verify Package Exists
         shell: cmd
         run: |
-          echo WORKSPACE=%GITHUB_WORKSPACE%
-          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\*" (
-            echo Publish folder MISSING
-            dir /s "%GITHUB_WORKSPACE%\artifacts"
+          if not exist "%GITHUB_WORKSPACE%\artifacts\TestingApp.zip" (
+            echo Package MISSING
             exit /b 1
           )
-          dir /s "%GITHUB_WORKSPACE%\artifacts\publish"
+          dir /s "%GITHUB_WORKSPACE%\artifacts"
 
-      - name: Publish via MSDeploy
+      - name: Deploy Package to IIS Site
         shell: cmd
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
-          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd",userName="deployuser",password="deploy123!",authType="Basic"
+          -source:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip"
+          -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd",userName="deployuser",password="deploy123!",authType="Basic"
           -enableRule:AppOffline -allowUntrusted -verbose
