@@ -15,7 +15,7 @@ jobs:
       - name: Setup .NET (SDK 9)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: "9.0.x"
 
       - name: Restore
         run: dotnet restore ".\TestingApp\TestingApp.csproj"
@@ -41,18 +41,9 @@ jobs:
 
       - name: Publish via MSDeploy
         shell: cmd
-        env:
-          DEPLOY_SERVER: 70.153.16.192
-          DEPLOY_SITE: TestingApp
-          DEPLOY_APP: TestingApp
-          DEPLOY_USER: deployuser
-          DEPLOY_PASS: deploy123!
         run: >
-          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" ^
-            -verb:sync ^
-            -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish" ^
-            -dest:auto,computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic" ^
-            -setParam:name="TestingApp",value="TestingApp" ^
-            -allowUntrusted -verbose
-
-
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:sync
+          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
+          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+          -allowUntrusted -verbose
