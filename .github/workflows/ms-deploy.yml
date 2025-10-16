@@ -13,48 +13,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup .NET (SDK 9)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
 
-      - name: Restore NuGet Packages
-        run: nuget restore TestingApp.sln
+      - name: Restore
+        run: dotnet restore ".\TestingApp\TestingApp.csproj"
 
-      - name: Build and Publish
-        run: msbuild TestingApp.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:PublishDir="publish/"
+      - name: Publish (ASP.NET Core)
+        shell: pwsh
+        run: >
+          dotnet publish .\TestingApp\TestingApp.csproj
+          -c Release
+          -o "$env:GITHUB_WORKSPACE\artifacts\publish"
+          --nologo
 
-      # - name: Deploy via MSDeploy
-      #   shell: cmd
-      #   run: >
-      #     "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-      #     -verb:sync
-      #     -source:contentPath=".\TestingApp\bin\Release\publish"
-      #     -dest:contentPath="TestingApp",
-      #     computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",
-      #     userName="deployuser",
-      #     password="deploy123!",
-      #     authType="Basic"
-      #     -allowUntrusted
-
-      # - name: Publish via MSDeploy
-      #   shell: cmd
-      #   run: >
-      #     "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-      #     -verb:sync
-      #     -source:contentPath=".\TestingApp\bin\Release\publish"
-      #     -dest:contentPath="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
-      #     -allowUntrusted
-      #   env:
-      #     DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
-      #     DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      #     DEPLOY_PASS: ${{ secrets.DEPLOY_PASS }}
-      - name: Deploy to IIS via Web Deploy
-        run: |
-          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" -verb:sync ^
-          -source:contentPath=".\TestingApp\bin\Release\publish" ^
-          -dest:iisApp="TestingApp",computerName="https://${{ env.DEPLOY_SERVER }}:8172/msdeploy.axd?site=TestingApp",userName="${{ env.DEPLOY_USER }}",password="${{ env.DEPLOY_PASS }}",authType="Basic" ^
-          -allowUntrusted -enableRule:AppOffline
+      - name: Verify publish output exists
         shell: cmd
-        env:
-          DEPLOY_SERVER: 70.153.16.192
-          DEPLOY_USER: deployuser
-          DEPLOY_PASS: deploy123!
+        run: |
+          echo WORKSPACE=%GITHUB_WORKSPACE%
+          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\*" (
+            echo Publish folder MISSING
+            dir /s "%GITHUB_WORKSPACE%\artifacts"
+            exit /b 1
+          )
+          dir /s "%GITHUB_WORKSPACE%\artifacts\publish"
+
+      - name: Publish via MSDeploy
+        shell: cmd
+        run: >
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:sync
+          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
+          -dest:auto,computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+          -allowUntrusted -verbose
