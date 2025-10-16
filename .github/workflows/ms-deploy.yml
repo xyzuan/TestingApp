@@ -2,7 +2,7 @@ name: Build & Deploy ASP.NET Core via MSDeploy
 
 on:
   push:
-    branches: ["fix/ci-cd-integration"]
+    branches: ["main"]
 
 jobs:
   build-and-deploy:
