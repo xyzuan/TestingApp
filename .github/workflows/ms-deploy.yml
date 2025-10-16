@@ -19,18 +19,36 @@ jobs:
       - name: Restore NuGet Packages
         run: nuget restore TestingApp.sln
 
-      - name: Build with MSBuild
-        run: msbuild TestingApp.sln /p:Configuration=Release
+      - name: Build & Publish
+        run: >
+          msbuild TestingApp.sln
+          /p:Configuration=Release
+          /p:DeployOnBuild=true
+          /p:PublishProfile=FolderProfile
+          /p:PublishUrl=".\TestingApp\bin\Release\publish"
 
-      - name: Publish via MSDeploy
+      - name: Deploy via MSDeploy
         shell: cmd
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
           -source:contentPath=".\TestingApp\bin\Release\publish"
-          -dest:contentPath="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+          -dest:contentPath="TestingApp",
+          computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",
+          userName="deployuser",
+          password="deploy123!",
+          authType="Basic"
           -allowUntrusted
-        env:
-          DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PASS: ${{ secrets.DEPLOY_PASS }}
+
+      # - name: Publish via MSDeploy
+      #   shell: cmd
+      #   run: >
+      #     "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+      #     -verb:sync
+      #     -source:contentPath=".\TestingApp\bin\Release\publish"
+      #     -dest:contentPath="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+      #     -allowUntrusted
+      #   env:
+      #     DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
+      #     DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      #     DEPLOY_PASS: ${{ secrets.DEPLOY_PASS }}
