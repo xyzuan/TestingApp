@@ -2,7 +2,7 @@ name: Build & Deploy ASP.NET Core via MSDeploy
 
 on:
   push:
-    branches: [ "fix/ci-cd-integration" ]
+    branches: ["fix/ci-cd-integration"]
 
 jobs:
   build-and-deploy:
@@ -17,24 +17,32 @@ jobs:
         with:
           dotnet-version: "9.0.x"
 
-      - name: Restore
-        run: dotnet restore ".\TestingApp\TestingApp.csproj"
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Publish (ASP.NET Core)
-        shell: pwsh
-        run: >
-          dotnet publish .\TestingApp\TestingApp.csproj
-          -c Release
-          -o "$env:GITHUB_WORKSPACE\artifacts\publish"
-          --nologo
-      
-      - name: Publish via MSDeploy
+      - name: Package with MSBuild (Web Deploy)
         shell: cmd
+        run: >
+          msbuild ".\TestingApp\TestingApp.csproj"
+          /p:Configuration=Release
+          /p:DeployOnBuild=true
+          /p:WebPublishMethod=Package
+          /p:PackageAsSingleFile=true
+          /p:PackageLocation="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip"
+          /p:SkipInvalidConfigurations=true
+          /p:PackageParameters="IIS Web Application Name=TestingApp
+
+      - name: Publish package via MSDeploy
+        shell: cmd
+        env:
+          DEPLOY_SERVER: 70.153.16.192
+          DEPLOY_SITE: TestingApp
+          DEPLOY_USER: deployuser
+          DEPLOY_PASS: deploy123!
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
-          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
-          -enableRule:AppOffline
-          -allowUntrusted
-          -verbose
+          -source:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip"
+          -dest:auto,computerName="https://%DEPLOY_SERVER%:8172/msdeploy.axd?site=%DEPLOY_SITE%",userName="%DEPLOY_USER%",password="%DEPLOY_PASS%",authType="Basic"
+          -setParam:name="IIS Web Application Name",value="TestingApp"
+          -allowUntrusted -verbose
