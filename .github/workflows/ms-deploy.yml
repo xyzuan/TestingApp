@@ -29,12 +29,12 @@ jobs:
           --nologo
       
       - name: Publish via MSDeploy
-        shell: cmd
-        run: >
-          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-          -verb:sync
-          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
-          -enableRule:AppOffline
-          -allowUntrusted
-          -verbose
+        shell: pwsh
+        run: |
+          & "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" `
+            -verb:sync `
+            -source:contentPath="$env:GITHUB_WORKSPACE\artifacts\publish" `
+            -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic" `
+            -enableRule:AppOffline `
+            -allowUntrusted `
+            -verbose
