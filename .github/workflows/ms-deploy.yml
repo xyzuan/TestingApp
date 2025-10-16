@@ -32,24 +32,18 @@ jobs:
         shell: cmd
         run: |
           echo WORKSPACE=%GITHUB_WORKSPACE%
-          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\nul" (
+          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\*" (
             echo Publish folder MISSING
             dir /s "%GITHUB_WORKSPACE%\artifacts"
             exit /b 1
           )
           dir /s "%GITHUB_WORKSPACE%\artifacts\publish"
 
-      - name: Check 8172 reachability (optional)
-        shell: powershell
-        run: Test-NetConnection $env:DEPLOY_SERVER -Port 8172
-        env:
-          DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
-
       - name: Publish via MSDeploy
         shell: cmd
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
-          -source:contentPath="%GITHUB_WORKSPACE%\TestingApp\bin\Release\publish"
+          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
           -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
           -allowUntrusted -verbose
