@@ -19,13 +19,8 @@ jobs:
       - name: Restore NuGet Packages
         run: nuget restore TestingApp.sln
 
-      - name: Build & Publish
-        run: >
-          msbuild TestingApp.sln
-          /p:Configuration=Release
-          /p:DeployOnBuild=true
-          /p:PublishProfile=FolderProfile
-          /p:PublishUrl=".\TestingApp\bin\Release\publish"
+      - name: Build and Publish
+        run: msbuild TestingApp.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:PublishDir="publish/"
 
       # - name: Deploy via MSDeploy
       #   shell: cmd
