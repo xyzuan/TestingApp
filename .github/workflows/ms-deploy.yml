@@ -1,50 +1,39 @@
-name: Build & Deploy ASP.NET Framework via MSDeploy
+name: Deploy ASP.NET to IIS
 
 on:
   push:
     branches:
-      - main
+      - main # Trigger on pushes to the main branch
 
 jobs:
   build-and-deploy:
-    runs-on: windows-latest
+    # This job runs on the self-hosted runner, which has access to your IIS server.
+    runs-on: self-hosted
+    environment: Production # Optional: Link to a GitHub Environment for tracking deployments
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET (SDK 9)
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "9.x" # Replace with your .NET version
 
-      - name: Restore
-        run: dotnet restore ".\TestingApp\TestingApp.csproj"
+      - name: Restore dependencies
+        run: dotnet restore
 
-      - name: Publish (ASP.NET Core)
-        shell: pwsh
-        run: >
-          dotnet publish .\TestingApp\TestingApp.csproj
-          -c Release
-          -o "$env:GITHUB_WORKSPACE\artifacts\publish"
-          --nologo
+      - name: Build and publish
+        run: dotnet publish -c Release -o ${{ github.workspace }}/publish
 
-      - name: Verify publish output exists
-        shell: cmd
-        run: |
-          echo WORKSPACE=%GITHUB_WORKSPACE%
-          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\*" (
-            echo Publish folder MISSING
-            dir /s "%GITHUB_WORKSPACE%\artifacts"
-            exit /b 1
-          )
-          dir /s "%GITHUB_WORKSPACE%\artifacts\publish"
-
-      - name: Publish via MSDeploy
-        shell: cmd
-        run: >
-          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-          -verb:sync
-          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
-          -enableRule:AppOffline -allowUntrusted -verbose
+      - name: Deploy to IIS using Web Deploy
+        uses: ChristopheLav/iis-deploy@v1 # Use a community-developed Web Deploy action
+        with:
+          website-name: "TestingApp" # Replace with your IIS site name
+          msdeploy-service-url: https://70.153.16.192:8172/msdeploy.axd
+          msdeploy-username: deployuser
+          msdeploy-password: deploy123!
+          source-path: ${{ github.workspace }}/publish # The published output
+          skip-extra-files: false
+          # You can add more Web Deploy parameters here if needed
+          # e.g., enable-app-offline: true to take the site offline during deployment
