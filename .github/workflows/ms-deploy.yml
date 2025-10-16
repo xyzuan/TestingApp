@@ -27,21 +27,63 @@ jobs:
           -c Release
           -o "$env:GITHUB_WORKSPACE\artifacts\publish"
           --nologo
-
-      - name: Create MSDeploy package
+          
+      - name: Create app_offline.htm
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\artifacts" | Out-Null
+          Set-Content -Path "$env:GITHUB_WORKSPACE\artifacts\app_offline.htm" -Value @"
+          <!doctype html>
+          <html>
+          <head><meta charset="utf-8"><title>Maintenance</title></head>
+          <body style="font-family:system-ui;margin:2rem">
+            <h1>We’ll be right back</h1>
+            <p>We’re deploying an update. Please try again in a few minutes.</p>
+          </body>
+          </html>
+          "@
+      
+      - name: Push app_offline.htm (take site offline)
         shell: cmd
+        env:
+          DEPLOY_SERVER: "70.153.16.192"
+          DEPLOY_SITE:   TestingApp
+          DEPLOY_APP:    TestingApp
+          DEPLOY_USER:   deployuser
+          DEPLOY_PASS:   deploy123!
+        run: >
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:sync
+          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\app_offline.htm"
+          -dest:contentPath="app_offline.htm",iisApp="%DEPLOY_APP%",computerName="https://%DEPLOY_SERVER%:8172/msdeploy.axd?site=%DEPLOY_SITE%",userName="%DEPLOY_USER%",password="%DEPLOY_PASS%",authType="Basic"
+          -allowUntrusted -verbose
+      
+      - name: Publish via MSDeploy (dirPath → iisApp)
+        shell: cmd
+        env:
+          DEPLOY_SERVER: "70.153.16.192"
+          DEPLOY_SITE:   TestingApp
+          DEPLOY_APP:    TestingApp
+          DEPLOY_USER:   deployuser
+          DEPLOY_PASS:   deploy123!
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
           -source:dirPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip"
-          -verbose
-
-      - name: Publish via MSDeploy
+          -dest:iisApp="%DEPLOY_APP%",computerName="https://%DEPLOY_SERVER%:8172/msdeploy.axd?site=%DEPLOY_SITE%",userName="%DEPLOY_USER%",password="%DEPLOY_PASS%",authType="Basic"
+          -allowUntrusted -verbose
+      
+      - name: Remove app_offline.htm
+        if: ${{ always() }}
         shell: cmd
+        env:
+          DEPLOY_SERVER: "70.153.16.192"
+          DEPLOY_SITE:   TestingApp
+          DEPLOY_APP:    TestingApp
+          DEPLOY_USER:   deployuser
+          DEPLOY_PASS:   deploy123!
         run: >
-          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" ^
-            -verb:sync ^
-            -source:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip" ^
-            -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic" ^
-            -enableRule:AppOffline -enableRule:DoNotDeleteRule -allowUntrusted -verbose
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:delete
+          -dest:contentPath="app_offline.htm",iisApp="%DEPLOY_APP%",computerName="https://%DEPLOY_SERVER%:8172/msdeploy.axd?site=%DEPLOY_SITE%",userName="%DEPLOY_USER%",password="%DEPLOY_PASS%",authType="Basic"
+          -allowUntrusted -verbose
