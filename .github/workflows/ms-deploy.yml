@@ -19,24 +19,37 @@ jobs:
       - name: Restore NuGet Packages
         run: nuget restore TestingApp.sln
 
-      - name: Build & Publish
+      - name: Build & Publish (Folder)
+        shell: cmd
         run: >
-          msbuild TestingApp.sln
+          msbuild ".\TestingApp\TestingApp.csproj"
           /p:Configuration=Release
-          /p:DeployOnBuild=true
-          /p:PublishProfile=FolderProfile
-          /p:PublishUrl=".\TestingApp\bin\Release\publish"
-
+          /p:WebPublishMethod=FileSystem
+          /p:DeleteExistingFiles=True
+          /p:PublishUrl="%GITHUB_WORKSPACE%\TestingApp\bin\Release\publish"
+      
       - name: Verify publish output exists
         shell: cmd
-        run: dir /s ".\TestingApp\bin\Release\publish"
+        run: |
+          echo WORKSPACE=%GITHUB_WORKSPACE%
+          if not exist "%GITHUB_WORKSPACE%\TestingApp\bin\Release\publish\nul" (
+            echo Publish folder MISSING
+            dir /s "%GITHUB_WORKSPACE%\TestingApp\bin\Release"
+            exit /b 1
+          )
+          dir /s "%GITHUB_WORKSPACE%\TestingApp\bin\Release\publish"
+      
+      # (Opsional) cek port 8172 dari runner
+      - name: Check 8172 reachability
+        shell: powershell
+        run: Test-NetConnection 70.153.16.192 -Port 8172
 
       - name: Publish via MSDeploy
         shell: cmd
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
-          -source:contentPath=".\TestingApp\bin\Release\publish"
+          -source:contentPath="%GITHUB_WORKSPACE%\TestingApp\bin\Release\publish"
           -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
           -allowUntrusted
         env:
