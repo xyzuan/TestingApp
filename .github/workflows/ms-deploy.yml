@@ -1,37 +1,50 @@
-name: Deploy ASP.NET to IIS
+name: Build & Deploy ASP.NET Framework via MSDeploy
 
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch
+      - main
 
 jobs:
   build-and-deploy:
-    # This job runs on the self-hosted runner, which has access to your IIS server.
     runs-on: windows-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up .NET
+      - name: Setup .NET (SDK 9)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.x" # Replace with your .NET version
+          dotnet-version: "9.0.x"
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore
+        run: dotnet restore ".\TestingApp\TestingApp.csproj"
 
-      - name: Build and publish
-        run: dotnet publish -c Release -o ${{ github.workspace }}/publish
+      - name: Publish (ASP.NET Core)
+        shell: pwsh
+        run: >
+          dotnet publish .\TestingApp\TestingApp.csproj
+          -c Release
+          -o "$env:GITHUB_WORKSPACE\artifacts\publish"
+          --nologo
 
-      - name: Deploy to IIS using Web Deploy
-        uses: ChristopheLav/iis-deploy@v1 # Use a community-developed Web Deploy action
-        with:
-          website-name: "TestingApp" # Replace with your IIS site name
-          msdeploy-service-url: https://70.153.16.192:8172/msdeploy.axd
-          msdeploy-username: deployuser
-          msdeploy-password: deploy123!
-          source-path: ${{ github.workspace }}/publish # The published output
-          skip-extra-files: false
-          # You can add more Web Deploy parameters here if needed
-          # e.g., enable-app-offline: true to take the site offline during deployment
+      - name: Verify publish output exists
+        shell: cmd
+        run: |
+          echo WORKSPACE=%GITHUB_WORKSPACE%
+          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\*" (
+            echo Publish folder MISSING
+            dir /s "%GITHUB_WORKSPACE%\artifacts"
+            exit /b 1
+          )
+          dir /s "%GITHUB_WORKSPACE%\artifacts\publish"
+
+      - name: Publish via MSDeploy
+        shell: cmd
+        run: >
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:sync
+          -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
+          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+          -enableRule:AppOffline -allowUntrusted -verbose
