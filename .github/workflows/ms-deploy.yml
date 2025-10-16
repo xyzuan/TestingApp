@@ -27,6 +27,10 @@ jobs:
           /p:PublishProfile=FolderProfile
           /p:PublishUrl=".\TestingApp\bin\Release\publish"
 
+      - name: Verify publish output exists
+        shell: cmd
+        run: dir /s ".\TestingApp\bin\Release\publish"
+
       - name: Publish via MSDeploy
         shell: cmd
         run: >
