@@ -41,9 +41,16 @@ jobs:
 
       - name: Publish via MSDeploy
         shell: cmd
+        env:
+          DEPLOY_SERVER: 70.153.16.192
+          DEPLOY_SITE: TestingApp
+          DEPLOY_APP: TestingApp
+          DEPLOY_USER: deployuser
+          DEPLOY_PASS: deploy123!
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
           -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+          -dest:iisApp="%DEPLOY_APP%",computerName="https://%DEPLOY_SERVER%:8172/msdeploy.axd?site=%DEPLOY_SITE%",userName="%DEPLOY_USER%",password="%DEPLOY_PASS%",authType="Basic"
           -allowUntrusted -verbose
+
