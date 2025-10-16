@@ -46,5 +46,5 @@ jobs:
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
           -verb:sync
           -source:contentPath="%GITHUB_WORKSPACE%\artifacts\publish"
-          -dest:contentPath="C:\inetpub\TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
-          -allowUntrusted -verbose
+          -dest:iisApp="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd",userName="deployuser",password="deploy123!",authType="Basic"
+          -enableRule:AppOffline -allowUntrusted -verbose
