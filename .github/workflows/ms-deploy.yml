@@ -40,15 +40,26 @@ jobs:
       #     authType="Basic"
       #     -allowUntrusted
 
-      - name: Publish via MSDeploy
+      # - name: Publish via MSDeploy
+      #   shell: cmd
+      #   run: >
+      #     "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+      #     -verb:sync
+      #     -source:contentPath=".\TestingApp\bin\Release\publish"
+      #     -dest:contentPath="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
+      #     -allowUntrusted
+      #   env:
+      #     DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
+      #     DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      #     DEPLOY_PASS: ${{ secrets.DEPLOY_PASS }}
+      - name: Deploy to IIS via Web Deploy
+        run: |
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" -verb:sync ^
+          -source:iisApp=".\TestingApp\bin\Release\publish" ^
+          -dest:iisApp="TestingApp",computerName="https://${{ env.DEPLOY_SERVER }}:8172/msdeploy.axd?site=TestingApp",userName="${{ env.DEPLOY_USER }}",password="${{ env.DEPLOY_PASS }}",authType="Basic" ^
+          -allowUntrusted -enableRule:AppOffline
         shell: cmd
-        run: >
-          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-          -verb:sync
-          -source:contentPath=".\TestingApp\bin\Release\publish"
-          -dest:contentPath="TestingApp",computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic"
-          -allowUntrusted
         env:
-          DEPLOY_SERVER: ${{ secrets.DEPLOY_SERVER }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PASS: ${{ secrets.DEPLOY_PASS }}
+          DEPLOY_SERVER: 70.153.16.192
+          DEPLOY_USER: deployuser
+          DEPLOY_PASS: deploy123!
