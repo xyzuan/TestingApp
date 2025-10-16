@@ -28,23 +28,21 @@ jobs:
           -o "$env:GITHUB_WORKSPACE\artifacts\publish"
           --nologo
 
-      - name: Verify publish output exists
+      - name: Create MSDeploy package
         shell: cmd
-        run: |
-          echo WORKSPACE=%GITHUB_WORKSPACE%
-          if not exist "%GITHUB_WORKSPACE%\artifacts\publish\*" (
-            echo Publish folder MISSING
-            dir /s "%GITHUB_WORKSPACE%\artifacts"
-            exit /b 1
-          )
-          dir /s "%GITHUB_WORKSPACE%\artifacts\publish"
+        run: >
+          "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:sync
+          -source:dirPath="%GITHUB_WORKSPACE%\artifacts\publish"
+          -dest:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip"
+          -verbose
 
       - name: Publish via MSDeploy
         shell: cmd
         run: >
           "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" ^
           -verb:sync ^
-          -source:dirPath="%GITHUB_WORKSPACE%\artifacts\publish" ^
+          -source:package="%GITHUB_WORKSPACE%\artifacts\TestingApp.zip" ^
           -dest:auto,computerName="https://70.153.16.192:8172/msdeploy.axd?site=TestingApp",userName="deployuser",password="deploy123!",authType="Basic" ^
           -setParam:name="IIS Web Application Name",value="TestingApp"
           -enableRule:AppOffline -allowUntrusted -verbose
